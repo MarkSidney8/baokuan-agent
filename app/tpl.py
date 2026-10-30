@@ -26,6 +26,8 @@ def msg_text(code: str) -> str:
         return "⚡ 一键复刻完成，制作单已生成，去制作台确认"
     if code.startswith("auto_done_"):
         return f"🤖 自动化任务执行完毕：{code[10:]}"
+    if code.startswith("ai_test_ok:"):
+        return "✅ AI 连接测试成功：" + code[len("ai_test_ok:"):]
     return _MSG_TEXT.get(code, code)
 
 
@@ -34,6 +36,8 @@ def err_text(code: str) -> str:
         return "⛔ 仅管理员可访问该页面"
     if code == "not_found":
         return "记录不存在"
+    if code.startswith("ai_test_fail:"):
+        return "❌ AI 连接测试失败：" + code[len("ai_test_fail:"):]
     return code
 
 

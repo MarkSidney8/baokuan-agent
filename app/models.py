@@ -132,7 +132,7 @@ class OperationLog(Base):
 
 
 class Setting(Base):
-    """系统设置：键值对（如 DeepSeek API Key），后台可改"""
+    """系统设置：键值对（如 AI 服务商 / API Key / 模型名），后台可改"""
     __tablename__ = "settings"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

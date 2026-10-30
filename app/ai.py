@@ -1,14 +1,77 @@
-"""AI 接入：httpx 调用 DeepSeek API。
+"""AI 接入：httpx 调用 OpenAI 兼容接口（/chat/completions）。
 
-配置优先级：数据库 Settings 表 > 环境变量。
+支持多服务商可配：DeepSeek / OpenAI / 通义千问 / Kimi / 智谱 GLM / 豆包 / 自定义。
+配置键（Settings 表）：ai_provider / ai_api_key / ai_base_url / ai_model。
+兼容旧键 deepseek_api_key / deepseek_base_url / deepseek_model（自动迁移读取）。
+
+配置优先级：数据库新键 > 环境变量 AI_* > 数据库旧键 > 环境变量 DEEPSEEK_* >
+服务商预设默认值。
 无 key 时抛 AiNotConfigured，路由层捕获后展示友好中文提示（不 500）。
 """
 import json
 import os
 import httpx
 
-DEFAULT_BASE_URL = "https://api.deepseek.com"
-DEFAULT_MODEL = "deepseek-chat"
+
+# ---------------------------------------------------------------- 服务商预设
+# 全部走 OpenAI 兼容的 /chat/completions 接口，换服务商只需换三件套：
+# 服务商 + API Key + 模型名（Base URL 可随预设自动填）。
+PROVIDERS = {
+    "deepseek": {
+        "label": "DeepSeek",
+        "base_url": "https://api.deepseek.com",
+        "default_model": "deepseek-chat",
+        "models": ["deepseek-chat", "deepseek-reasoner"],
+        "key_hint": "sk- 开头",
+    },
+    "openai": {
+        "label": "OpenAI",
+        "base_url": "https://api.openai.com/v1",
+        "default_model": "gpt-4o-mini",
+        "models": ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1"],
+        "key_hint": "sk- 开头",
+    },
+    "qwen": {
+        "label": "通义千问（阿里）",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "default_model": "qwen-plus",
+        "models": ["qwen-plus", "qwen-turbo", "qwen-max"],
+        "key_hint": "sk- 开头",
+    },
+    "moonshot": {
+        "label": "Kimi（月之暗面）",
+        "base_url": "https://api.moonshot.cn/v1",
+        "default_model": "kimi-k2-0711-preview",
+        "models": ["kimi-k2-0711-preview", "moonshot-v1-8k", "moonshot-v1-32k"],
+        "key_hint": "sk- 开头",
+    },
+    "zhipu": {
+        "label": "智谱 GLM",
+        "base_url": "https://open.bigmodel.cn/api/paas/v4",
+        "default_model": "glm-4-flash",
+        "models": ["glm-4-flash", "glm-4-air", "glm-4-plus"],
+        "key_hint": "智谱开放平台 API Key",
+    },
+    "doubao": {
+        "label": "豆包（火山引擎）",
+        "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+        "default_model": "doubao-seed-1-6-250615",
+        "models": ["doubao-seed-1-6-250615", "doubao-seed-1-6-flash-250615"],
+        "key_hint": "火山引擎 API Key；模型名填推理接入点 ID",
+    },
+    "custom": {
+        "label": "自定义（OpenAI 兼容接口）",
+        "base_url": "",
+        "default_model": "",
+        "models": [],
+        "key_hint": "任意 OpenAI 兼容服务的 Key",
+    },
+}
+
+DEFAULT_PROVIDER = "deepseek"
+# 兼容旧引用：settings.py 等仍可从这里取默认值
+DEFAULT_BASE_URL = PROVIDERS[DEFAULT_PROVIDER]["base_url"]
+DEFAULT_MODEL = PROVIDERS[DEFAULT_PROVIDER]["default_model"]
 
 
 class AiNotConfigured(Exception):
@@ -35,30 +98,73 @@ SYSTEM_PROMPT = (
 )
 
 
-def get_ai_config(db=None):
-    """读取 AI 配置，返回 (api_key, base_url, model)。
+# 旧版 deepseek_* 键/环境变量的兼容映射（自动迁移读取）
+_LEGACY_KEYS = {
+    "ai_provider": None,  # 旧版没有服务商概念，默认 deepseek
+    "ai_api_key": "deepseek_api_key",
+    "ai_base_url": "deepseek_base_url",
+    "ai_model": "deepseek_model",
+}
+_LEGACY_ENVS = {
+    "AI_PROVIDER": None,
+    "AI_API_KEY": "DEEPSEEK_API_KEY",
+    "AI_BASE_URL": "DEEPSEEK_BASE_URL",
+    "AI_MODEL": "DEEPSEEK_MODEL",
+}
 
-    优先级：数据库 Settings 表 > 环境变量 DEEPSEEK_API_KEY / DEEPSEEK_BASE_URL / DEEPSEEK_MODEL。
-    无 key 时抛 AiNotConfigured。
+
+def _pick(rows: dict, env, new_key: str) -> str:
+    """按优先级取值：库新键 > 环境变量新名 > 库旧键 > 环境变量旧名。"""
+    v = (rows.get(new_key) or "").strip()
+    if v:
+        return v
+    v = (env.get(new_key.upper()) or "").strip()
+    if v:
+        return v
+    legacy_key = _LEGACY_KEYS.get(new_key)
+    if legacy_key:
+        v = (rows.get(legacy_key) or "").strip()
+        if v:
+            return v
+    legacy_env = _LEGACY_ENVS.get(new_key.upper())
+    if legacy_env:
+        v = (env.get(legacy_env) or "").strip()
+        if v:
+            return v
+    return ""
+
+
+def get_ai_config(db=None):
+    """读取 AI 配置，返回 (provider_id, api_key, base_url, model)。
+
+    优先级：数据库新键 > 环境变量 AI_* > 数据库旧 deepseek_* 键 >
+    环境变量 DEEPSEEK_* > 服务商预设默认值。
+    无 key 或配置不完整时抛 AiNotConfigured。
     """
-    key = base = model = ""
+    rows = {}
     if db is not None:
         try:
             from .models import Setting
-            rows = {s.key: s.value for s in db.query(Setting).all()}
-            key = (rows.get("deepseek_api_key") or "").strip()
-            base = (rows.get("deepseek_base_url") or "").strip()
-            model = (rows.get("deepseek_model") or "").strip()
+            rows = {s.key: (s.value or "") for s in db.query(Setting).all()}
         except Exception:
             pass  # 表不存在等异常时降级走环境变量
-    key = key or os.environ.get("DEEPSEEK_API_KEY", "").strip()
-    base = base or os.environ.get("DEEPSEEK_BASE_URL", "").strip() or DEFAULT_BASE_URL
-    model = model or os.environ.get("DEEPSEEK_MODEL", "").strip() or DEFAULT_MODEL
+    env = os.environ
+    provider = _pick(rows, env, "ai_provider") or DEFAULT_PROVIDER
+    if provider not in PROVIDERS:
+        provider = DEFAULT_PROVIDER
+    preset = PROVIDERS[provider]
+    key = _pick(rows, env, "ai_api_key")
+    base = _pick(rows, env, "ai_base_url") or preset["base_url"]
+    model = _pick(rows, env, "ai_model") or preset["default_model"]
     if not key:
         raise AiNotConfigured(
-            "未配置 DeepSeek API Key，请在后台「系统设置」页填写，"
-            "或在服务器环境变量中配置 DEEPSEEK_API_KEY 后重启")
-    return key, base, model
+            "未配置 AI API Key，请在后台「系统设置」页选择服务商并填写 Key，"
+            "或在服务器环境变量中配置 AI_API_KEY 后重启")
+    if not base or not model:
+        raise AiNotConfigured(
+            "AI 配置不完整：%s 的 Base URL 或模型名为空，请到「系统设置」页补全"
+            % preset["label"])
+    return provider, key, base, model
 
 
 def _parse_json(text):
@@ -71,8 +177,43 @@ def _parse_json(text):
     return json.loads(t)
 
 
+async def test_ai_connection(db=None):
+    """用最小请求实测当前 AI 配置是否可用，返回 (ok, 说明文字)。
+
+    供「系统设置」页的「测试连接」按钮调用，不抛异常。
+    """
+    try:
+        provider, key, base_url, model = get_ai_config(db)
+    except AiNotConfigured as e:
+        return False, str(e)
+    label = PROVIDERS[provider]["label"]
+    url = base_url.rstrip("/") + "/chat/completions"
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                url,
+                headers={"Authorization": "Bearer " + key,
+                         "Content-Type": "application/json"},
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": "只回复：连接成功"}],
+                    "temperature": 0,
+                    "max_tokens": 16,
+                },
+            )
+        if resp.status_code != 200:
+            return False, "接口返回 %s：%s" % (resp.status_code, resp.text[:200])
+        data = resp.json()
+        reply = data["choices"][0]["message"]["content"].strip()
+        return True, "连接成功（%s / %s），模型回复：%s" % (label, model, reply[:60])
+    except (AiNotConfigured, AiCallFailed) as e:
+        return False, str(e)
+    except Exception as e:
+        return False, "连接失败：%s" % e
+
+
 async def _chat(system, user_prompt, db=None):
-    key, base_url, model = get_ai_config(db)
+    provider, key, base_url, model = get_ai_config(db)
     url = base_url.rstrip("/") + "/chat/completions"
     try:
         async with httpx.AsyncClient(timeout=90.0) as client:
@@ -180,7 +321,7 @@ async def ai_diagnose(metrics, db=None):
 # 无 Key 时的降级：后台「系统设置」可开关 demo_mode（默认开）。
 # 所有演示输出均带【演示数据】标记，配置真实 Key 后自动走 AI。
 
-DEMO_NOTE = "【演示数据】当前为演示模式（未配置 DeepSeek Key），配置后将由 AI 真实生成。"
+DEMO_NOTE = "【演示数据】当前为演示模式（未配置 AI Key），配置后将由 AI 真实生成。"
 
 
 def _demo_enabled(db=None) -> bool:
