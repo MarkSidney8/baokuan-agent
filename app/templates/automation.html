@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block title %}自动化任务 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+<h1 class="text-2xl font-bold">🤖 自动化任务</h1>
+<span class="text-xs text-slate-400">演示模式：{{ '开（无Key可跑通全流程）' if demo else '关'}}，去系统设置切换</span>
+</div>
+<div class="card mb-4 text-sm text-slate-500">
+每天 <b>08:00</b> 自动为每个有人设的类目生成选题、<b>08:30</b> 自动拆解待拆解的爆款并存入模板库。
+也可以点「立即执行」马上跑一次。无 Key 时走演示模式（输出带标记），配置 Key 后走真实 AI。
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+{% for t in tasks %}
+<div class="card">
+<h2 class="font-bold text-lg mb-1">{{ t.name}}</h2>
+<p class="text-sm text-slate-500 mb-2">{{ t.desc}}</p>
+<p class="text-xs text-slate-400 mb-3">上次运行：{{ t.last}}</p>
+<form method="post" action="/automation/run/{{ t.key}}">
+<button class="btn btn-green">▶ 立即执行</button>
+</form>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

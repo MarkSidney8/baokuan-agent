@@ -20,6 +20,12 @@ _MSG_TEXT = {
 def msg_text(code: str) -> str:
     if code.startswith("ai_ok_"):
         return f"🤖 AI 生成成功，共 {code[6:]} 条，已存入待拍"
+    if code.startswith("seed_ok_"):
+        return f"📦 演示爆款已载入（{code[8:]} 条），去爆款库一键复刻试试"
+    if code == "clone_ok":
+        return "⚡ 一键复刻完成，制作单已生成，去制作台确认"
+    if code.startswith("auto_done_"):
+        return f"🤖 自动化任务执行完毕：{code[10:]}"
     return _MSG_TEXT.get(code, code)
 
 

@@ -5,4 +5,5 @@ jinja2
 python-multipart
 httpx
 itsdangerous
-passlib[bcrypt]
+bcrypt
+apscheduler

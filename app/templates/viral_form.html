@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}爆款入库 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">🔥 爆款入库</h1>
+<div class="card max-w-2xl">
+  <form method="post" action="/viral/new" class="space-y-4">
+    <div><label class="lbl">视频标题</label><input name="title" class="field" placeholder="如：加绒加厚卫衣29块9，卖爆320万播放"></div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="lbl">发布账号</label><input name="author" class="field" placeholder="如：县城穿搭老王"></div>
+      <div><label class="lbl">原视频链接</label><input name="source_url" class="field" placeholder="抖音分享链接（选填）"></div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="lbl">原品类</label><input name="category" class="field" placeholder="如：服装"></div>
+      <div><label class="lbl">原商品名</label><input name="product_name" class="field" placeholder="如：加绒加厚卫衣"></div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="lbl">播放量</label><input name="play_count" class="field" placeholder="如：320万"></div>
+      <div><label class="lbl">点赞数</label><input name="like_count" class="field" placeholder="如：18万"></div>
+    </div>
+    <div><label class="lbl">口播文案 / 视频描述</label><textarea name="transcript" rows="6" class="field" placeholder="把爆款视频的口播文案粘贴进来，用于拆解和复刻"></textarea></div>
+    <div class="flex gap-2">
+      <button class="btn btn-primary">💾 入库</button>
+      <a href="/viral" class="btn btn-gray">返回</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

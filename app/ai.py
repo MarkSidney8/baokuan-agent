@@ -168,4 +168,181 @@ async def ai_diagnose(metrics, db=None):
         % (metrics.get("play_count", 0), metrics.get("finish_rate", 0),
            metrics.get("click_rate", 0), metrics.get("orders", 0), metrics.get("gpm", 0))
     )
-    return await _chat(SYSTEM_PROMPT, prompt, db)
+    try:
+        return await _chat(SYSTEM_PROMPT, prompt, db)
+    except AiNotConfigured:
+        if _demo_enabled(db):
+            return _demo_diagnose(metrics)
+        raise
+
+
+# ---------------------------------------------------------------- 演示模式
+# 无 Key 时的降级：后台「系统设置」可开关 demo_mode（默认开）。
+# 所有演示输出均带【演示数据】标记，配置真实 Key 后自动走 AI。
+
+DEMO_NOTE = "【演示数据】当前为演示模式（未配置 DeepSeek Key），配置后将由 AI 真实生成。"
+
+
+def _demo_enabled(db=None) -> bool:
+    if db is None:
+        return True
+    try:
+        from .models import Setting
+        s = db.query(Setting).filter(Setting.key == "demo_mode").first()
+        return (s.value if s else "1") == "1"
+    except Exception:
+        return True
+
+
+def _demo_wrap(func):
+    """给 ai_* 函数包一层演示降级"""
+    import functools
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        db = kwargs.get("db")
+        try:
+            return await func(*args, **kwargs)
+        except AiNotConfigured:
+            if _demo_enabled(db):
+                demo_fn = globals().get("_demo_" + func.__name__[3:])
+                if demo_fn:
+                    return demo_fn(*args, **kwargs)
+            raise
+    return wrapper
+
+
+def _demo_persona(category, audience, db=None):
+    return {
+        "name": f"【演示】{category}严选官",
+        "audience": audience or "县城30-50岁女性",
+        "tone": "邻家大姐口语",
+        "persona_desc": f"专注{category}的实在人，只讲真实体验。" + DEMO_NOTE,
+        "selling_style": "先演示再报价，不说教，只讲真实体验。" + DEMO_NOTE,
+    }
+
+
+def _demo_topics(category, count, audience, db=None):
+    seeds = [
+        ("爆款实测", "把最火的那款拆开给你看，值不值这个价"),
+        ("避坑指南", "买{cat}最容易踩的3个坑，第2个最多人中招"),
+        ("价格对比", "超市卖{high}，我这{low}，同样的东西"),
+        ("真实体验", "用了7天，说点大实话"),
+        ("场景种草", "有了它，{aud}都说方便"),
+    ]
+    out = []
+    for i in range(count):
+        k, note = seeds[i % len(seeds)]
+        out.append({
+            "title": f"【演示】{category}{k}#{i + 1}",
+            "season_tag": "演示",
+            "notes": note.format(cat=category or "好物", high="29.9", low="9.9",
+                                 aud=audience or "邻居") + "。" + DEMO_NOTE,
+        })
+    return out
+
+
+def _demo_breakdown(text, db=None):
+    head = (text or "")[:24]
+    return {
+        "hook": f"【演示】钩子提炼：{head}…" if head else "【演示】钩子：前3秒抛痛点/悬念" + DEMO_NOTE,
+        "pain": "【演示】痛点：说出目标人群最扎心的日常麻烦。" + DEMO_NOTE,
+        "demo": "【演示】演示：上手实拍，3个镜头展示效果对比。" + DEMO_NOTE,
+        "price_anchor": "【演示】价格锚点：原价XX vs 现价XX，限时。" + DEMO_NOTE,
+        "cta": "【演示】催单：今天下单送赠品，库存不多。" + DEMO_NOTE,
+    }
+
+
+def _swap(text, old_p, new_p, old_price, new_price):
+    t = text or ""
+    if old_p:
+        t = t.replace(old_p, new_p)
+    if old_price and new_price and old_price != new_price:
+        t = t.replace(old_price, new_price)
+    return t
+
+
+def _demo_clone(viral, new, db=None):
+    """演示版一键复刻：规则式元素替换（保留结构，只换商品元素）"""
+    old_p = viral.get("product_name") or "原商品"
+    new_p = new.get("name") or "新商品"
+    new_c = new.get("category") or ""
+    price = new.get("price") or "9.9"
+    high = new.get("high_price") or "29.9"
+    points = new.get("selling_points") or "好用不贵"
+
+    hook = _swap(viral.get("hook") or f"你家还在用{old_p}吗？看看这个！", old_p, new_p, "", "")
+    pain = _swap(viral.get("pain") or f"{old_p}不好用，问题一大堆。", old_p, new_p, "", "")
+    demo = _swap(viral.get("demo") or f"看我上手演示{old_p}，效果立竿见影。", old_p, new_p, "", "")
+    price_a = f"超市同款卖{high}，我这条{new_p}只要{price}，{points}。"
+    cta = f"今天下单立减，{new_p}仅剩最后几十件，点下方小黄车。"
+
+    script_text = (
+        f"【0-3秒钩子】{hook}\n【3-15秒演示】{pain}{demo}\n"
+        f"【15-25秒价格对比】{price_a}\n【25-30秒催单】{cta}\n{DEMO_NOTE}"
+    )
+    shots = [
+        {"time": "0-3秒", "shot": f"{new_p}特写+痛点字幕", "caption": hook},
+        {"time": "3-8秒", "shot": f"手持{new_p}展示细节", "caption": pain},
+        {"time": "8-15秒", "shot": f"{new_p}使用效果对比", "caption": demo},
+        {"time": "15-25秒", "shot": "价格对比字幕卡", "caption": price_a},
+        {"time": "25-30秒", "shot": "小黄车指引+催单口播", "caption": cta},
+    ]
+    return {
+        "script_text": script_text,
+        "shots": shots,
+        "image_prompts": f"【演示】{new_c}{new_p}产品特写，暖光，电商质感。" + DEMO_NOTE,
+        "video_prompts": f"【演示】手持{new_p}缓慢旋转展示，3秒。" + DEMO_NOTE,
+    }
+
+
+def _demo_diagnose(metrics, db=None):
+    return (
+        f"【诊断结论】{DEMO_NOTE}\n"
+        f"播放{metrics.get('play_count', 0)}，完播率{metrics.get('finish_rate', 0)}%。"
+        "完播率低于15%先改前3秒钩子；有点击无转化改价格话术。\n"
+        "【核心问题】演示数据，仅供看流程。\n【优化动作】配置 Key 后由 AI 按真实数据诊断。"
+    )
+
+
+async def ai_clone(viral: dict, new: dict, db=None):
+    """一键复刻：保留原爆款五段结构与话术节奏，只替换商品元素。
+
+    viral: {product_name, category, hook, pain, demo, price_anchor, cta}
+    new: {name, category, price, high_price, selling_points}
+    返回 {script_text, shots, image_prompts, video_prompts}
+    """
+    prompt = (
+        "你是爆款带货视频复刻专家。任务：完整保留原爆款视频的五段结构、节奏、"
+        "话术套路和钩子风格，只把其中与商品相关的元素替换成新商品。\n"
+        "【原爆款】\n原商品：%(old_p)s（原品类：%(old_c)s）\n"
+        "钩子：%(hook)s\n痛点：%(pain)s\n演示：%(demo)s\n"
+        "价格对比：%(price_a)s\n催单：%(cta)s\n"
+        "【新商品】\n商品名：%(new_p)s（新品类：%(new_c)s）\n"
+        "现价：%(price)s元，对比价：%(high)s元\n卖点：%(points)s\n"
+        "【硬性要求】\n"
+        "1. 五段结构一比一对应，钩子的话术套路原样保留，只替换其中的商品词；\n"
+        "2. 所有价格、品名、卖点、演示动作、画面中的商品都换成新商品；\n"
+        "3. 口播用普通人说话语气，禁用说教和AI味总结句；\n"
+        "4. 返回纯 JSON：script_text（按【0-3秒钩子】【3-15秒演示】"
+        "【15-25秒价格对比】【25-30秒催单】分段）、shots（4-6镜，每镜 "
+        "{time, shot, caption}）、image_prompts（封面+关键帧中文描述）、"
+        "video_prompts（每镜运镜动作中文描述）。"
+        % {"old_p": viral.get("product_name", ""), "old_c": viral.get("category", ""),
+           "hook": viral.get("hook", ""), "pain": viral.get("pain", ""),
+           "demo": viral.get("demo", ""), "price_a": viral.get("price_anchor", ""),
+           "cta": viral.get("cta", ""), "new_p": new.get("name", ""),
+           "new_c": new.get("category", ""), "price": new.get("price", ""),
+           "high": new.get("high_price", ""), "points": new.get("selling_points", "")}
+    )
+    try:
+        return _parse_json(await _chat(SYSTEM_PROMPT, prompt, db))
+    except AiNotConfigured:
+        if _demo_enabled(db):
+            return _demo_clone(viral, new, db)
+        raise
+
+
+# 给无人值守的自动化任务用的同步包装（内部复用同一套演示降级）
+for _fn in ("ai_persona", "ai_topics", "ai_breakdown", "ai_script", "ai_diagnose"):
+    globals()[_fn] = _demo_wrap(globals()[_fn])

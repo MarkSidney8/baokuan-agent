@@ -140,3 +140,45 @@ class Setting(Base):
     value: Mapped[str] = mapped_column(Text, default="")
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=_now, onupdate=_now)
+
+
+class ViralVideo(Base):
+    """爆款库：热门带货视频（手动入库 / 第三方数据API拉取预留）"""
+    __tablename__ = "viral_videos"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String(255), default="")        # 视频标题
+    author: Mapped[str] = mapped_column(String(128), default="")       # 发布账号
+    source_url: Mapped[str] = mapped_column(String(512), default="")   # 原视频链接
+    category: Mapped[str] = mapped_column(String(64), default="")      # 原品类：如 服装
+    product_name: Mapped[str] = mapped_column(String(128), default="") # 原商品名
+    play_count: Mapped[str] = mapped_column(String(32), default="")    # 播放量（文本，如 120万）
+    like_count: Mapped[str] = mapped_column(String(32), default="")    # 点赞数
+    transcript: Mapped[str] = mapped_column(Text, default="")          # 口播文案/描述
+    status: Mapped[str] = mapped_column(String(16), default="待拆解")   # 待拆解/已拆解/已复刻
+    source: Mapped[str] = mapped_column(String(32), default="手动")     # 手动/蝉妈妈/飞瓜
+    created_by: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class CloneJob(Base):
+    """一键复刻任务：爆款结构保留 + 商品元素替换"""
+    __tablename__ = "clone_jobs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    viral_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("viral_videos.id"), nullable=True)
+    old_product: Mapped[str] = mapped_column(String(128), default="")  # 原商品
+    new_product: Mapped[str] = mapped_column(String(128), default="")  # 新商品
+    new_category: Mapped[str] = mapped_column(String(64), default="")  # 新类目
+    new_price: Mapped[str] = mapped_column(String(32), default="")     # 新价格
+    new_high_price: Mapped[str] = mapped_column(String(32), default="")  # 新对比价
+    selling_points: Mapped[str] = mapped_column(Text, default="")      # 新卖点
+    script_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("scripts.id"), nullable=True)               # 生成的制作单
+    status: Mapped[str] = mapped_column(String(16), default="已完成")
+    created_by: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+    viral: Mapped["ViralVideo | None"] = relationship("ViralVideo")
+    script: Mapped["Script | None"] = relationship("Script")

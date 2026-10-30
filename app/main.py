@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from .database import Base, engine, SessionLocal
 from . import models  # noqa: F401 触发模型注册
 from .auth import AuthRedirect, hash_password
-from .routers import auth, dashboard, personas, topics, breakdown, scripts, stats, team, settings
+from .routers import auth, dashboard, personas, topics, breakdown, scripts, stats, team, settings, viral, automation
 
 app = FastAPI(title="爆款带货智能体工作台")
 
@@ -46,3 +46,22 @@ app.include_router(scripts.router)
 app.include_router(stats.router)
 app.include_router(team.router)
 app.include_router(settings.router)
+app.include_router(viral.router)
+app.include_router(automation.router)
+
+
+# 自动化定时任务：每天 08:00 自动选题，08:30 自动拆解爆款
+def _start_scheduler():
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        from .automation import run_daily_topics, run_auto_breakdown
+        sch = BackgroundScheduler(timezone="Asia/Shanghai")
+        sch.add_job(run_daily_topics, "cron", hour=8, minute=0, id="daily_topics")
+        sch.add_job(run_auto_breakdown, "cron", hour=8, minute=30, id="auto_breakdown")
+        sch.start()
+        print("[init] 自动化定时任务已启动（每日 08:00 选题 / 08:30 拆解）")
+    except Exception as e:
+        print(f"[init] 定时任务启动失败（不影响使用，可在自动化页面手动执行）：{e}")
+
+
+_start_scheduler()

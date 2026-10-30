@@ -22,6 +22,18 @@
   </form>
 </div>
 <div class="card max-w-2xl mt-4">
+  <h2 class="font-bold mb-2">🧪 演示模式</h2>
+  <form method="post" action="/settings">
+    <input type="hidden" name="deepseek_base_url" value="{{ vals.get('deepseek_base_url', 'https://api.deepseek.com') }}">
+    <input type="hidden" name="deepseek_model" value="{{ vals.get('deepseek_model', 'deepseek-chat') }}">
+    <label class="flex items-start gap-2 text-sm cursor-pointer">
+      <input type="checkbox" name="demo_mode" value="on" class="mt-1" {% if demo_mode %}checked{% endif %}>
+      <span>开启演示模式（无 Key 时 AI 功能返回标注好的演示数据，可完整体验全流程；配置真实 Key 后建议关闭）</span>
+    </label>
+    <button class="btn btn-primary mt-3">💾 保存</button>
+  </form>
+</div>
+<div class="card max-w-2xl mt-4">
   <h2 class="font-bold mb-2">📖 说明</h2>
   <ul class="text-sm text-slate-500 space-y-1 list-disc pl-5">
     <li>不配置 Key 时，所有 AI 按钮会提示「未配置」，不影响其他功能使用。</li>

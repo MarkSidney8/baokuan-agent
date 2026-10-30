@@ -34,8 +34,10 @@
       <a class="nav-link {{ 'active' if request.url.path.startswith('/personas') }}" href="/personas">🎭 人设管理</a>
       <a class="nav-link {{ 'active' if request.url.path.startswith('/topics') }}" href="/topics">💡 选题中心</a>
       <a class="nav-link {{ 'active' if request.url.path.startswith('/breakdown') }}" href="/breakdown">🧩 爆款拆解</a>
+      <a class="nav-link {{ 'active' if request.url.path.startswith('/viral') }}" href="/viral">🔥 爆款库</a>
       <a class="nav-link {{ 'active' if request.url.path.startswith('/scripts') }}" href="/scripts">🎬 制作台</a>
       <a class="nav-link {{ 'active' if request.url.path.startswith('/stats') }}" href="/stats">📈 数据复盘</a>
+      <a class="nav-link {{ 'active' if request.url.path.startswith('/automation') }}" href="/automation">🤖 自动化</a>
       {% if user and user.role=='admin' %}
       <a class="nav-link {{ 'active' if request.url.path.startswith('/team') }}" href="/team">👥 团队管理</a>
       <a class="nav-link {{ 'active' if request.url.path.startswith('/settings') }}" href="/settings">⚙️ 系统设置</a>

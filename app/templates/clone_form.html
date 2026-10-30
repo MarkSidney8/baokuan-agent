@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block title %}一键复刻 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">⚡ 一键复刻</h1>
+<div class="card mb-4 text-sm">
+  <div class="font-bold mb-1">原爆款：{{ viral.title or viral.product_name }}</div>
+  <div class="text-slate-500">原商品：{{ viral.product_name }}（{{ viral.category }}）｜{{ viral.author }}｜▶{{ viral.play_count }}</div>
+  <div class="text-slate-400 text-xs mt-1">复刻逻辑：完整保留左侧五段结构与话术节奏，只把商品元素替换成右侧的新商品。</div>
+</div>
+<form method="post" action="/viral/{{ viral.id }}/clone">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <div class="card">
+    <h2 class="font-bold mb-3">📋 原爆款结构（可微调）</h2>
+    <div class="space-y-3">
+      <div><label class="lbl">钩子 0-3秒</label><textarea name="hook" rows="2" class="field">{{ struct.hook }}</textarea></div>
+      <div><label class="lbl">痛点</label><textarea name="pain" rows="2" class="field">{{ struct.pain }}</textarea></div>
+      <div><label class="lbl">演示 3-15秒</label><textarea name="demo" rows="2" class="field">{{ struct.demo }}</textarea></div>
+      <div><label class="lbl">价格对比 15-25秒</label><textarea name="price_anchor" rows="2" class="field">{{ struct.price_anchor }}</textarea></div>
+      <div><label class="lbl">催单 25-30秒</label><textarea name="cta" rows="2" class="field">{{ struct.cta }}</textarea></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2 class="font-bold mb-3">🔄 替换成新商品</h2>
+    <div class="space-y-3">
+      <div><label class="lbl">新商品名 *</label><input name="new_product" required class="field" placeholder="如：冰丝休闲裤"></div>
+      <div><label class="lbl">新类目</label><input name="new_category" class="field" placeholder="如：服装"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">现价（元）</label><input name="new_price" class="field" placeholder="如：19.9"></div>
+        <div><label class="lbl">对比价（元）</label><input name="new_high_price" class="field" placeholder="如：59.9"></div>
+      </div>
+      <div><label class="lbl">新卖点</label><textarea name="selling_points" rows="3" class="field" placeholder="如：冰丝面料，透气不闷，松紧腰不勒"></textarea></div>
+      <div class="pt-2">
+        <button class="btn btn-green w-full !py-3 text-base">⚡ 开始复刻，生成新脚本</button>
+      </div>
+      <p class="text-xs text-slate-400">复刻完成后自动生成制作单（含口播脚本/分镜/生图与视频提示词），在制作台确认。</p>
+    </div>
+  </div>
+</div>
+</form>
+{% endblock %}

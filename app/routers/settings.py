@@ -36,8 +36,10 @@ def settings_page(request: Request, user: User = Depends(require_admin),
     vals = _get_settings(db)
     masked_key = "已配置（" + "*" * 4 + (vals.get("deepseek_api_key", "")[-4:] or "") + "）" \
         if vals.get("deepseek_api_key") else "未配置"
+    demo_mode = vals.get("demo_mode", "1") == "1"
     return templates.TemplateResponse(request, "settings.html",
         template_ctx(request, user, fields=KEY_FIELDS, vals=vals, masked_key=masked_key,
+                     demo_mode=demo_mode,
                      msg=request.query_params.get("msg", ""),
                      err=request.query_params.get("err", "")))
 
@@ -47,6 +49,7 @@ def settings_save(request: Request,
                   deepseek_api_key: str = Form(""),
                   deepseek_base_url: str = Form(""),
                   deepseek_model: str = Form(""),
+                  demo_mode: str | None = Form(default=None),
                   user: User = Depends(require_admin),
                   db: Session = Depends(get_db)):
     # Key 为 password 框：留空表示不修改，避免页面回显泄露
@@ -55,5 +58,6 @@ def settings_save(request: Request,
     _set_setting(db, "deepseek_base_url",
                  deepseek_base_url.strip() or DEFAULT_BASE_URL)
     _set_setting(db, "deepseek_model", deepseek_model.strip() or DEFAULT_MODEL)
+    _set_setting(db, "demo_mode", "1" if demo_mode == "on" else "0")
     log_action(db, user.username, "修改系统设置", "DeepSeek API 配置")
     return redirect_msg("/settings", msg="saved")

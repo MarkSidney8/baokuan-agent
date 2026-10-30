@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block title %}爆款库 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+  <h1 class="text-2xl font-bold">🔥 爆款库</h1>
+  <div class="flex gap-2">
+    <form method="post" action="/viral/seed" class="inline">
+      <button class="btn btn-gray">📦 载入演示爆款</button>
+    </form>
+    <a href="/viral/new" class="btn btn-primary">+ 爆款入库</a>
+  </div>
+</div>
+<div class="card mb-4 text-sm text-slate-500">
+  把全网最火的带货视频收进库里，点 <b>⚡一键复刻</b> 就能保留它的爆款结构、只替换商品元素（比如把卖衣服的换成卖裤子），直接生成新脚本。
+  第三方数据（蝉妈妈/飞瓜）API 对接位已预留，在系统设置配好 Key 后可自动拉取。
+</div>
+<div class="card">
+  <div class="flex gap-2 mb-3">
+    <a href="/viral" class="btn {{ 'btn-primary' if not cur_status else 'btn-gray' }} !py-1 text-xs">全部</a>
+    {% for s in statuses %}
+    <a href="/viral?status={{ s }}" class="btn {{ 'btn-primary' if cur_status==s else 'btn-gray' }} !py-1 text-xs">{{ s }}</a>
+    {% endfor %}
+  </div>
+<table class="tbl">
+  <thead><tr><th>标题 / 原商品</th><th>账号</th><th>数据</th><th>状态</th><th>操作</th></tr></thead>
+  <tbody>
+  {% for v in videos %}
+  <tr>
+    <td class="font-bold">{{ v.title or v.product_name }}
+      <div class="text-xs text-slate-400 font-normal">原商品：{{ v.product_name }}｜品类：{{ v.category }}｜来源：{{ v.source }}</div>
+    </td>
+    <td>{{ v.author }}</td>
+    <td class="whitespace-nowrap">▶{{ v.play_count }}<br>♥{{ v.like_count }}</td>
+    <td><span class="badge {{ 'bg-yellow-100 text-yellow-800' if v.status=='待拆解' else ('bg-blue-100 text-blue-800' if v.status=='已拆解' else 'bg-green-100 text-green-800') }}">{{ v.status }}</span></td>
+    <td class="whitespace-nowrap">
+      <a href="/viral/{{ v.id }}/clone" class="btn btn-green !py-1 !px-2 text-xs">⚡ 一键复刻</a>
+      <form method="post" action="/viral/{{ v.id }}/delete" class="inline" onsubmit="return confirm('确定删除？')">
+        <button class="btn btn-red !py-1 !px-2 text-xs">删除</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="text-center text-slate-400 py-6">库是空的，先「爆款入库」或「载入演示爆款」</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
