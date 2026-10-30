@@ -4,25 +4,52 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>登录 - 爆款带货智能体工作台</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/static/css/app.css">
+<style>
+  body { font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC","Segoe UI",sans-serif; }
+  .bg-auth { background:
+    radial-gradient(900px 500px at 15% 10%, rgba(99,102,241,.35) 0%, transparent 55%),
+    radial-gradient(800px 500px at 90% 90%, rgba(236,72,153,.28) 0%, transparent 55%),
+    linear-gradient(160deg,#0b1226 0%,#1c1747 60%,#2b2370 100%); }
+  .auth-card { background:rgba(255,255,255,.96); backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.4); border-radius:1.4rem;
+    box-shadow:0 24px 64px -16px rgba(0,0,0,.5); }
+  .brand-badge { width:3.2rem; height:3.2rem; border-radius:1.1rem; display:flex; align-items:center;
+    justify-content:center; font-size:1.7rem; background:linear-gradient(135deg,#f59e0b,#ef4444);
+    box-shadow:0 10px 24px rgba(239,68,68,.45); }
+  .field { width:100%; background:#f8fafc; border:1px solid #e2e8f0; border-radius:.8rem;
+    padding:.7rem 1rem; font-size:.9rem; transition:all .16s ease; }
+  .field:focus { outline:none; background:#fff; border-color:#818cf8;
+    box-shadow:0 0 0 3px rgba(99,102,241,.18); }
+  .btn-login { width:100%; padding:.75rem; border-radius:.9rem; font-weight:700; color:#fff;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    box-shadow:0 10px 24px rgba(99,102,241,.45); transition:all .16s ease; }
+  .btn-login:hover { filter:brightness(1.08); box-shadow:0 14px 30px rgba(99,102,241,.55); }
+  .btn-login:active { transform:scale(.98); }
+  @keyframes floatUp { from { opacity:0; transform:translateY(16px) scale(.98); } to { opacity:1; transform:none; } }
+  .float-up { animation:floatUp .5s cubic-bezier(.22,.8,.32,1) both; }
+</style>
 </head>
-<body class="bg-slate-900 min-h-screen flex items-center justify-center">
-<div class="bg-white rounded-xl shadow-xl p-8 w-96">
-  <div class="text-2xl font-bold text-center mb-2">🔥 爆款带货工作台</div>
-  <div class="text-sm text-slate-500 text-center mb-6">团队登录</div>
-  {% if msg %}<div class="mb-4 p-3 rounded bg-red-100 text-red-800 text-sm">{{ msg }}</div>{% endif %}
+<body class="bg-auth min-h-screen flex items-center justify-center p-4">
+<div class="auth-card float-up p-8 w-[26rem] max-w-full">
+  <div class="flex flex-col items-center mb-6">
+    <div class="brand-badge mb-3">🔥</div>
+    <div class="text-xl font-extrabold tracking-tight text-slate-900">爆款带货工作台</div>
+    <div class="text-xs text-slate-400 tracking-[.2em] mt-1">AI · 下沉市场 · 团队协作</div>
+  </div>
+  {% if msg %}<div class="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">⚠️ {{ msg }}</div>{% endif %}
   <form method="post" action="/login" class="space-y-4">
     <div>
-      <label class="block text-sm text-slate-600 mb-1">用户名</label>
-      <input name="username" required class="w-full border rounded-lg px-3 py-2" placeholder="admin">
+      <label class="block text-xs font-bold text-slate-500 mb-1.5 tracking-wide">用户名</label>
+      <input name="username" required class="field" placeholder="admin" autocomplete="username">
     </div>
     <div>
-      <label class="block text-sm text-slate-600 mb-1">密码</label>
-      <input name="password" type="password" required class="w-full border rounded-lg px-3 py-2" placeholder="初始密码 admin123">
+      <label class="block text-xs font-bold text-slate-500 mb-1.5 tracking-wide">密码</label>
+      <input name="password" type="password" required class="field" placeholder="初始密码 admin123" autocomplete="current-password">
     </div>
-    <button class="w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700">登录</button>
+    <button class="btn-login">登 录</button>
   </form>
-  <div class="text-xs text-slate-400 text-center mt-4">首次登录 admin / admin123，需立即改密码</div>
+  <div class="text-xs text-slate-400 text-center mt-5">首次登录 admin / admin123，需立即改密码</div>
 </div>
 </body>
 </html>
