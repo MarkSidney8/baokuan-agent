@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}爆款带货智能体工作台{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .nav-link { display:block; padding:.6rem .9rem; border-radius:.5rem; color:#cbd5e1; }
+  .nav-link:hover { background:#1e293b; color:#fff; }
+  .nav-link.active { background:#2563eb; color:#fff; }
+  .btn { display:inline-block; padding:.5rem 1rem; border-radius:.5rem; font-size:.875rem; }
+  .btn-primary { background:#2563eb; color:#fff; } .btn-primary:hover { background:#1d4ed8; }
+  .btn-green { background:#16a34a; color:#fff; } .btn-green:hover { background:#15803d; }
+  .btn-red { background:#dc2626; color:#fff; } .btn-red:hover { background:#b91c1c; }
+  .btn-gray { background:#e5e7eb; color:#111827; } .btn-gray:hover { background:#d1d5db; }
+  .card { background:#fff; border-radius:.75rem; box-shadow:0 1px 3px rgba(0,0,0,.08); padding:1.25rem; }
+  .field { width:100%; border:1px solid #d1d5db; border-radius:.5rem; padding:.5rem .75rem; font-size:.875rem; }
+  .field:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.2); }
+  label.lbl { display:block; font-size:.8rem; color:#4b5563; margin-bottom:.25rem; }
+  table.tbl { width:100%; font-size:.875rem; }
+  table.tbl th { text-align:left; padding:.5rem .75rem; color:#6b7280; border-bottom:2px solid #e5e7eb; white-space:nowrap; }
+  table.tbl td { padding:.5rem .75rem; border-bottom:1px solid #f3f4f6; vertical-align:top; }
+  .badge { display:inline-block; padding:.15rem .6rem; border-radius:9999px; font-size:.75rem; }
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+<div class="flex min-h-screen">
+  <!-- 侧边导航 -->
+  <aside class="w-56 bg-slate-900 text-white p-4 flex flex-col shrink-0">
+    <div class="text-lg font-bold mb-6 px-2">🔥 爆款带货工作台</div>
+    <nav class="space-y-1 flex-1">
+      <a class="nav-link {{ 'active' if request.url.path=='/' }}" href="/">📊 仪表盘</a>
+      <a class="nav-link {{ 'active' if request.url.path.startswith('/personas') }}" href="/personas">🎭 人设管理</a>
+      <a class="nav-link {{ 'active' if request.url.path.startswith('/topics') }}" href="/topics">💡 选题中心</a>
+      <a class="nav-link {{ 'active' if request.url.path.startswith('/breakdown') }}" href="/breakdown">🧩 爆款拆解</a>
+      <a class="nav-link {{ 'active' if request.url.path.startswith('/scripts') }}" href="/scripts">🎬 制作台</a>
+      <a class="nav-link {{ 'active' if request.url.path.startswith('/stats') }}" href="/stats">📈 数据复盘</a>
+      {% if user and user.role=='admin' %}
+      <a class="nav-link {{ 'active' if request.url.path.startswith('/team') }}" href="/team">👥 团队管理</a>
+      <a class="nav-link {{ 'active' if request.url.path.startswith('/settings') }}" href="/settings">⚙️ 系统设置</a>
+      {% endif %}
+    </nav>
+    <div class="border-t border-slate-700 pt-3 text-sm text-slate-400">
+      <div class="px-2 mb-2">👤 {{ user.username if user }}（{{ '管理员' if user and user.role=='admin' else '成员' }}）</div>
+      <a class="nav-link" href="/change-password">🔑 改密码</a>
+      <a class="nav-link" href="/logout">🚪 退出登录</a>
+    </div>
+  </aside>
+  <!-- 主内容 -->
+  <main class="flex-1 p-6 max-w-6xl">
+    {% if msg %}<div class="mb-4 p-3 rounded bg-green-100 text-green-800 text-sm">{{ msg_text(msg) }}</div>{% endif %}
+    {% if err %}<div class="mb-4 p-3 rounded bg-red-100 text-red-800 text-sm">{{ err_text(err) }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

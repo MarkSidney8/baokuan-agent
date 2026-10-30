@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block title %}选题中心 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+  <h1 class="text-2xl font-bold">💡 选题中心</h1>
+  <a href="/topics/new" class="btn btn-primary">+ 新建选题</a>
+</div>
+<div class="card mb-4">
+  <h2 class="font-bold mb-3">🤖 AI 批量生成选题</h2>
+  <form method="post" action="/topics/ai" class="flex flex-wrap gap-3 items-end">
+    <div><label class="lbl">类目</label><input name="category" required class="field" placeholder="如：家居收纳" style="width:12rem"></div>
+    <div><label class="lbl">目标人群</label><input name="audience" class="field" placeholder="如：小镇青年" style="width:12rem"></div>
+    <div><label class="lbl">数量</label><input name="count" type="number" value="5" min="1" max="20" class="field" style="width:6rem"></div>
+    <button class="btn btn-green">AI 生成并存入待拍</button>
+  </form>
+</div>
+<div class="card">
+  <div class="flex gap-2 mb-3">
+    <a href="/topics" class="btn {{ 'btn-primary' if not cur_status else 'btn-gray' }} !py-1 text-xs">全部</a>
+    {% for s in statuses %}
+    <a href="/topics?status={{ s }}" class="btn {{ 'btn-primary' if cur_status==s else 'btn-gray' }} !py-1 text-xs">{{ s }}</a>
+    {% endfor %}
+  </div>
+<table class="tbl">
+  <thead><tr><th>标题</th><th>类目</th><th>人设</th><th>季节标签</th><th>状态</th><th>创建人</th><th>操作</th></tr></thead>
+  <tbody>
+  {% for t in topics %}
+  <tr>
+    <td class="font-bold">{{ t.title }}<div class="text-xs text-slate-400 font-normal">{{ t.notes }}</div></td>
+    <td>{{ t.category }}</td>
+    <td>{{ persona_map.get(t.persona_id, '-') if t.persona_id else '-' }}</td>
+    <td>{{ t.season_tag }}</td>
+    <td><span class="badge {{ 'bg-yellow-100 text-yellow-800' if t.status=='待拍' else ('bg-blue-100 text-blue-800' if t.status=='制作中' else 'bg-green-100 text-green-800') }}">{{ t.status }}</span></td>
+    <td>{{ t.created_by }}</td>
+    <td class="whitespace-nowrap">
+      <a href="/topics/{{ t.id }}/edit" class="btn btn-gray !py-1 !px-2 text-xs">编辑</a>
+      <form method="post" action="/topics/{{ t.id }}/status" class="inline">
+        <input type="hidden" name="status" value="{{ '制作中' if t.status=='待拍' else ('已发布' if t.status=='制作中' else '待拍') }}">
+        <button class="btn btn-green !py-1 !px-2 text-xs">{{ '→制作中' if t.status=='待拍' else ('→已发布' if t.status=='制作中' else '→待拍') }}</button>
+      </form>
+      <form method="post" action="/topics/{{ t.id }}/delete" class="inline" onsubmit="return confirm('确定删除？')">
+        <button class="btn btn-red !py-1 !px-2 text-xs">删除</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="text-center text-slate-400 py-6">暂无选题</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

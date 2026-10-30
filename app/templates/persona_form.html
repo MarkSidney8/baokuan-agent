@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block title %}{{ '编辑人设' if persona else '新建人设' }} - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">{{ '✏️ 编辑人设' if persona else '➕ 新建人设' }}</h1>
+<div class="card max-w-2xl">
+<form method="post" action="{{ '/personas/%s/edit' % persona.id if persona else '/personas/new' }}" class="space-y-4">
+  <div class="grid grid-cols-2 gap-4">
+    <div><label class="lbl">人设名称 *</label><input name="name" required class="field" value="{{ persona.name if persona }}"></div>
+    <div><label class="lbl">类目</label><input name="category" class="field" value="{{ persona.category if persona }}" placeholder="如：厨房日用"></div>
+  </div>
+  <div class="grid grid-cols-2 gap-4">
+    <div><label class="lbl">目标人群</label><input name="audience" class="field" value="{{ persona.audience if persona }}" placeholder="如：县城30-50岁宝妈"></div>
+    <div><label class="lbl">语气风格</label><input name="tone" class="field" value="{{ persona.tone if persona }}" placeholder="如：亲切实在"></div>
+  </div>
+  <div><label class="lbl">人设描述</label><textarea name="persona_desc" rows="3" class="field">{{ persona.persona_desc if persona }}</textarea></div>
+  <div><label class="lbl">带货风格</label><textarea name="selling_style" rows="3" class="field">{{ persona.selling_style if persona }}</textarea></div>
+  <div class="flex gap-3">
+    <button class="btn btn-primary">保存</button>
+    <a href="/personas" class="btn btn-gray">返回</a>
+  </div>
+</form>
+</div>
+{% endblock %}

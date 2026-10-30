@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block title %}爆款拆解 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">🧩 爆款拆解</h1>
+<div class="card mb-4">
+  <h2 class="font-bold mb-3">粘贴爆款口播文案 / 描述</h2>
+  <form method="post" action="/breakdown/analyze">
+    <textarea name="source_text" rows="6" required class="field mb-3" placeholder="把爆款视频的口播文案或你的文字描述粘进来，AI 会按钩子/痛点/演示/价格锚点/催单拆解">{{ source_text }}</textarea>
+    <button class="btn btn-green">🤖 AI 拆解</button>
+  </form>
+</div>
+{% if result %}
+<div class="card mb-4">
+  <h2 class="font-bold mb-3">📋 拆解结果（可修改后存为模板）</h2>
+  <form method="post" action="/breakdown/save" class="space-y-3">
+    <div><label class="lbl">模板名称 *</label><input name="name" required class="field" placeholder="如：厨房神器爆款结构"></div>
+    <input type="hidden" name="source_desc" value="{{ source_text[:200] }}">
+    {% for key, label in fields %}
+    <div><label class="lbl">{{ label }}</label><textarea name="{{ key }}" rows="2" class="field">{{ result[key] }}</textarea></div>
+    {% endfor %}
+    <button class="btn btn-primary">💾 存为模板</button>
+  </form>
+</div>
+{% endif %}
+<div class="card">
+  <h2 class="font-bold mb-3">📚 最近保存的模板</h2>
+  {% if saved %}
+  <table class="tbl">
+    <thead><tr><th>模板名</th><th>钩子</th><th>创建人</th></tr></thead>
+    <tbody>
+    {% for t in saved %}
+    <tr><td class="font-bold">{{ t.name }}</td><td class="text-slate-500">{{ t.hook[:60] }}</td><td>{{ t.created_by }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="text-sm text-slate-400">还没有模板，拆解一条爆款存下来吧</div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block title %}制作单 #{{ script.id }} - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+  <h1 class="text-2xl font-bold">🎬 制作单 #{{ script.id }} <span class="badge {{ 'bg-green-100 text-green-800' if script.status=='已确认' else 'bg-yellow-100 text-yellow-800' }}">{{ script.status }}</span></h1>
+  <a href="/scripts" class="btn btn-gray">返回列表</a>
+</div>
+<div class="card mb-4">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+    <div><span class="text-slate-400">商品：</span><b>{{ script.product_name }}</b></div>
+    <div><span class="text-slate-400">现价：</span>{{ script.product_price }}元</div>
+    <div><span class="text-slate-400">对比价：</span>{{ script.product_high_price }}元</div>
+    <div><span class="text-slate-400">佣金：</span>{{ script.commission }}</div>
+    <div><span class="text-slate-400">选题：</span>{{ script.topic.title if script.topic else '-' }}</div>
+    <div><span class="text-slate-400">模板：</span>{{ script.template.name if script.template else '-' }}</div>
+  </div>
+  <div class="mt-4 flex gap-3">
+    <form method="post" action="/scripts/{{ script.id }}/generate">
+      <button class="btn btn-green">🤖 AI 生成脚本</button>
+    </form>
+    {% if script.status != '已确认' %}
+    <form method="post" action="/scripts/{{ script.id }}/confirm" onsubmit="return confirm('确认为终稿？')">
+      <button class="btn btn-primary">✅ 确认为终稿</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="text-xs text-slate-400 mt-2">AI 生成口播脚本 + 分镜 + 生图提示词 + 视频提示词，可下方手工修改后保存</div>
+</div>
+{% if script.script_text or script.image_prompts %}
+<div class="card mb-4">
+<form method="post" action="/scripts/{{ script.id }}/save" class="space-y-4">
+  <div><label class="lbl">📝 口播脚本</label><textarea name="script_text" rows="10" class="field">{{ script.script_text }}</textarea></div>
+  <div><label class="lbl">🎞️ 分镜</label><textarea rows="6" readonly class="field bg-slate-50">{{ shots_text }}</textarea>
+    <div class="text-xs text-slate-400 mt-1">分镜由 AI 生成后自动排版，此处只读展示</div></div>
+  <div><label class="lbl">🖼️ 生图提示词</label><textarea name="image_prompts" rows="5" class="field">{{ script.image_prompts }}</textarea></div>
+  <div><label class="lbl">🎥 视频提示词</label><textarea name="video_prompts" rows="5" class="field">{{ script.video_prompts }}</textarea></div>
+  <button class="btn btn-primary">💾 保存修改</button>
+</form>
+</div>
+{% else %}
+<div class="card text-center text-slate-400 py-8">还没有脚本内容，点上面「AI 生成脚本」开始</div>
+{% endif %}
+{% endblock %}

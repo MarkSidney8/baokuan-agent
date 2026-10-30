@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}制作台 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+  <h1 class="text-2xl font-bold">🎬 制作台</h1>
+  <a href="/scripts/new" class="btn btn-primary">+ 新建制作单</a>
+</div>
+<div class="card">
+<table class="tbl">
+  <thead><tr><th>ID</th><th>商品</th><th>价格</th><th>选题</th><th>状态</th><th>创建人</th><th>操作</th></tr></thead>
+  <tbody>
+  {% for s in scripts %}
+  <tr>
+    <td>#{{ s.id }}</td>
+    <td class="font-bold">{{ s.product_name }}</td>
+    <td>{{ s.product_price }}元{% if s.product_high_price %}<span class="text-slate-400 line-through text-xs ml-1">{{ s.product_high_price }}元</span>{% endif %}</td>
+    <td class="text-slate-500">{{ s.topic.title if s.topic else '-' }}</td>
+    <td><span class="badge {{ 'bg-green-100 text-green-800' if s.status=='已确认' else 'bg-yellow-100 text-yellow-800' }}">{{ s.status }}</span></td>
+    <td>{{ s.created_by }}</td>
+    <td class="whitespace-nowrap">
+      <a href="/scripts/{{ s.id }}" class="btn btn-primary !py-1 !px-2 text-xs">打开</a>
+      <form method="post" action="/scripts/{{ s.id }}/delete" class="inline" onsubmit="return confirm('确定删除？')">
+        <button class="btn btn-red !py-1 !px-2 text-xs">删除</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="text-center text-slate-400 py-6">暂无制作单</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

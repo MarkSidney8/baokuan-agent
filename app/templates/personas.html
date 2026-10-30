@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}人设管理 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+  <h1 class="text-2xl font-bold">🎭 人设管理</h1>
+  <a href="/personas/new" class="btn btn-primary">+ 新建人设</a>
+</div>
+<div class="card mb-4">
+  <h2 class="font-bold mb-3">🤖 AI 生成人设</h2>
+  <form method="post" action="/personas/ai" class="flex flex-wrap gap-3 items-end">
+    <div><label class="lbl">类目</label><input name="category" required class="field" placeholder="如：厨房日用" style="width:12rem"></div>
+    <div><label class="lbl">目标人群</label><input name="audience" required class="field" placeholder="如：县城30-50岁宝妈" style="width:16rem"></div>
+    <button class="btn btn-green">AI 生成并保存</button>
+  </form>
+  <div class="text-xs text-slate-400 mt-2">面向下沉市场，语气自动按普通人说话风格生成</div>
+</div>
+<div class="card">
+<table class="tbl">
+  <thead><tr><th>名称</th><th>类目</th><th>目标人群</th><th>语气</th><th>创建人</th><th>操作</th></tr></thead>
+  <tbody>
+  {% for p in personas %}
+  <tr>
+    <td class="font-bold">{{ p.name }}</td>
+    <td>{{ p.category }}</td><td>{{ p.audience }}</td><td>{{ p.tone }}</td>
+    <td>{{ p.created_by }}</td>
+    <td class="whitespace-nowrap">
+      <a href="/personas/{{ p.id }}/edit" class="btn btn-gray !py-1 !px-2 text-xs">编辑</a>
+      <form method="post" action="/personas/{{ p.id }}/delete" class="inline" onsubmit="return confirm('确定删除？')">
+        <button class="btn btn-red !py-1 !px-2 text-xs">删除</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="text-center text-slate-400 py-6">暂无人设，先新建或 AI 生成一个</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

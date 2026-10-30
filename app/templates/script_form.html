@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block title %}新建制作单 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">➕ 新建制作单</h1>
+<div class="card max-w-2xl">
+<form method="post" action="/scripts/new" class="space-y-4">
+  <div class="grid grid-cols-2 gap-4">
+    <div><label class="lbl">关联选题</label>
+      <select name="topic_id" class="field">
+        <option value="">不关联</option>
+        {% for t in topics %}<option value="{{ t.id }}">{{ t.title }}（{{ t.status }}）</option>{% endfor %}
+      </select></div>
+    <div><label class="lbl">拆解模板</label>
+      <select name="template_id" class="field">
+        <option value="">不使用模板</option>
+        {% for t in templates %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+      </select></div>
+  </div>
+  <div><label class="lbl">商品名 *</label><input name="product_name" required class="field" placeholder="如：多功能切菜器"></div>
+  <div class="grid grid-cols-3 gap-4">
+    <div><label class="lbl">现价（元）</label><input name="product_price" class="field" placeholder="9.9"></div>
+    <div><label class="lbl">原价/对比价（元）</label><input name="product_high_price" class="field" placeholder="29.9"></div>
+    <div><label class="lbl">佣金</label><input name="commission" class="field" placeholder="如：20%"></div>
+  </div>
+  <div class="flex gap-3">
+    <button class="btn btn-primary">创建并进入制作</button>
+    <a href="/scripts" class="btn btn-gray">返回</a>
+  </div>
+</form>
+</div>
+{% endblock %}

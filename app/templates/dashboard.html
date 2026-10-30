@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block title %}仪表盘 - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">📊 仪表盘</h1>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  {% for k, v in counts.items() %}
+  <div class="card text-center">
+    <div class="text-3xl font-bold text-blue-600">{{ v }}</div>
+    <div class="text-sm text-slate-500 mt-1">{{ k }}数</div>
+  </div>
+  {% endfor %}
+</div>
+<div class="grid md:grid-cols-2 gap-4">
+  <div class="card">
+    <h2 class="font-bold mb-3">🆕 最近选题</h2>
+    {% if recent_topics %}
+    <ul class="space-y-2 text-sm">
+      {% for t in recent_topics %}
+      <li class="flex justify-between"><span class="truncate">{{ t.title }}</span>
+        <span class="badge bg-slate-100">{{ t.status }}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<div class="text-sm text-slate-400">暂无，去选题中心添加吧</div>{% endif %}
+  </div>
+  <div class="card">
+    <h2 class="font-bold mb-3">📝 待办：待拍选题（{{ todo_topics|length }}）</h2>
+    {% if todo_topics %}
+    <ul class="space-y-2 text-sm">
+      {% for t in todo_topics %}
+      <li class="flex justify-between items-center">
+        <span class="truncate">{{ t.title }}</span>
+        <a href="/scripts/new" class="btn btn-primary !py-1 !px-2 text-xs">去制作</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<div class="text-sm text-slate-400">没有待拍选题，全部搞定 🎉</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

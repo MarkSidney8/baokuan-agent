@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block title %}{{ '编辑选题' if topic else '新建选题' }} - 爆款带货智能体工作台{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">{{ '✏️ 编辑选题' if topic else '➕ 新建选题' }}</h1>
+<div class="card max-w-2xl">
+<form method="post" action="{{ '/topics/%s/edit' % topic.id if topic else '/topics/new' }}" class="space-y-4">
+  <div><label class="lbl">选题标题 *</label><input name="title" required class="field" value="{{ topic.title if topic }}"></div>
+  <div class="grid grid-cols-2 gap-4">
+    <div><label class="lbl">类目</label><input name="category" class="field" value="{{ topic.category if topic }}"></div>
+    <div><label class="lbl">季节/热点标签</label><input name="season_tag" class="field" value="{{ topic.season_tag if topic }}" placeholder="如：冬季保暖"></div>
+  </div>
+  <div class="grid grid-cols-2 gap-4">
+    <div><label class="lbl">关联人设</label>
+      <select name="persona_id" class="field">
+        <option value="">不关联</option>
+        {% for p in personas %}
+        <option value="{{ p.id }}" {{ 'selected' if topic and topic.persona_id==p.id }}>{{ p.name }}</option>
+        {% endfor %}
+      </select></div>
+    <div><label class="lbl">状态</label>
+      <select name="status" class="field">
+        {% for s in statuses %}
+        <option {{ 'selected' if topic and topic.status==s }}>{{ s }}</option>
+        {% endfor %}
+      </select></div>
+  </div>
+  <div><label class="lbl">备注/拍摄要点</label><textarea name="notes" rows="3" class="field">{{ topic.notes if topic }}</textarea></div>
+  <div class="flex gap-3">
+    <button class="btn btn-primary">保存</button>
+    <a href="/topics" class="btn btn-gray">返回</a>
+  </div>
+</form>
+</div>
+{% endblock %}
